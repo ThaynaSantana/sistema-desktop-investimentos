@@ -5,7 +5,51 @@ from controllers.esqueci_minha_senha import show_reset_password_screen
 from views.home import show_home_screen
 from controllers.tela_registro import show_register_screen
 
+
+def create_database():
+    try:
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="root"
+        )
+        cursor = conn.cursor()
+        cursor.execute("CREATE DATABASE IF NOT EXISTS db_bau")
+        cursor.execute("USE db_bau")
+
+        # Criar tabela usuarios
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(255) NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL,
+                saldo DECIMAL(10, 2) DEFAULT 0.0
+            )
+        """)
+
+        # Criar tabela investimentos
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS investimentos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT,
+                tipo VARCHAR(255) NOT NULL,
+                valor_investido DECIMAL(10, 2) NOT NULL,
+                rendimento DECIMAL(10, 2) NOT NULL,
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+            )
+        """)
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except mysql.connector.Error as err:
+        messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados: {err}")
+
+
 def show_login_screen():
+    create_database()
+
     # Função para o link ESQUECI MINHA SENHA
     def forgot_password():
         show_reset_password_screen()
@@ -27,8 +71,8 @@ def show_login_screen():
             )
             cursor = conn.cursor()
 
-            #Verificação se existe essa conta de usuario
-            cursor.execute("SELECT * FROM usuarios WHERE username=%s AND password=%s", (username,password))
+            # Verificação se existe essa conta de usuario
+            cursor.execute("SELECT * FROM usuarios WHERE username=%s AND password=%s", (username, password))
             result = cursor.fetchone()
 
             if result:
@@ -36,9 +80,10 @@ def show_login_screen():
                 root.destroy()
                 show_home_screen(username)
             else:
-                messagebox.showerror("Erro","Não foi possivel fazer login da conta inserida.")
+                messagebox.showerror("Erro", "Não foi possível fazer login da conta inserida.")
         finally:
             cursor.close()
+            conn.close()
 
     # Configuração da janela principal
     root = tk.Tk()
@@ -61,13 +106,13 @@ def show_login_screen():
     label_title = tk.Label(frame, text="Tela de Login do BAÚ", font=("Helvetica", 24))
     label_title.grid(row=0, column=0, columnspan=2, pady=10)
 
-    # Rotulo e input USUARIO
+    # Rótulo e input USUARIO
     label_username = tk.Label(frame, text="Usuário:")
     label_username.grid(row=1, column=0, pady=5, sticky="e")
     entry_username = tk.Entry(frame)
     entry_username.grid(row=1, column=1, pady=5)
 
-    # Rotulo e input SENHA
+    # Rótulo e input SENHA
     label_password = tk.Label(frame, text="Senha:")
     label_password.grid(row=2, column=0, pady=5, sticky="e")
     entry_password = tk.Entry(frame, show="*")
@@ -89,6 +134,6 @@ def show_login_screen():
     # Loop principal da aplicação
     root.mainloop()
 
+
 if __name__ == "__main__":
     show_login_screen()
-

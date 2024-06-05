@@ -28,23 +28,24 @@ def show_reset_password_screen():
             cursor = conn.cursor()
 
             # Verificar se o email existe no banco de dados
-            cursor.execute("SELECT * FROM usuarios WHERE email=%s", email)
+            cursor.execute("SELECT * FROM usuarios WHERE email=%s", (email,))
             result = cursor.fetchone()
 
             if result:
                 # Atualizar a senha no banco de dados
-                cursor.execute("UPDATE usuarios SET senha=%s WHERE email=%s", (new_password, email))
+                cursor.execute("UPDATE usuarios SET password=%s WHERE email=%s", (new_password, email))
                 conn.commit()
                 messagebox.showinfo("Sucesso", "Senha alterada com sucesso.")
             else:
                 messagebox.showerror("Erro", "Email não encontrado.")
 
-            cursor.close()
-            conn.close()
         except mysql.connector.Error as err:
             messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados: {err}")
         finally:
-            cursor.close()
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
 
     root = tk.Tk()
     root.title("Redefinição de Senha")
